@@ -1,47 +1,195 @@
-[![Open in Visual Studio Code](https://classroom.github.com/assets/open-in-vscode-2e0aaae1b6195c2367325f4f02e2d04e9abb55f0b24a779b69b11b9e10269abc.svg)](https://classroom.github.com/online_ide?assignment_repo_id=19655867&assignment_repo_type=AssignmentRepo)
-# MongoDB Fundamentals Assignment
+PLP Bookstore MongoDB Setup and Operations
 
-This assignment focuses on learning MongoDB fundamentals including setup, CRUD operations, advanced queries, aggregation pipelines, and indexing.
+This document provides a structured walkthrough of setting up and performing essential MongoDB operations for the plp_bookstore database, including data creation, CRUD operations, advanced queries, aggregations, and indexing for performance optimization.
+📘 TASK ONE – MongoDB Setup
+✅ Create a New Database
 
-## Assignment Overview
+use plp_bookstore
 
-You will:
-1. Set up a MongoDB database
-2. Perform basic CRUD operations
-3. Write advanced queries with filtering, projection, and sorting
-4. Create aggregation pipelines for data analysis
-5. Implement indexing for performance optimization
+✅ Create the Book Collection
 
-## Getting Started
+db.books.insertOne({ 
+    title: "Sample Book", 
+    author: "Sample Author", 
+    price: 9.99 
+})
 
-1. Accept the GitHub Classroom assignment invitation
-2. Clone your personal repository that was created by GitHub Classroom
-3. Install MongoDB locally or set up a MongoDB Atlas account
-4. Run the provided `insert_books.js` script to populate your database
-5. Complete the tasks in the assignment document
+🛠️ TASK TWO – CRUD Operations
+🔍 Find Operations
 
-## Files Included
+    Find books in a specific genre
 
-- `Week1-Assignment.md`: Detailed assignment instructions
-- `insert_books.js`: Script to populate your MongoDB database with sample book data
+db.books.find({ genre: "Fantasy" })
 
-## Requirements
+    Find books published after a certain year
 
-- Node.js (v18 or higher)
-- MongoDB (local installation or Atlas account)
-- MongoDB Shell (mongosh) or MongoDB Compass
+db.books.find({ published_year: { $gt: 1950 } })
 
-## Submission
+    Find books by a specific author
 
-Your work will be automatically submitted when you push to your GitHub Classroom repository. Make sure to:
+db.books.find({ author: "George Orwell" })
 
-1. Complete all tasks in the assignment
-2. Add your `queries.js` file with all required MongoDB queries
-3. Include a screenshot of your MongoDB database
-4. Update the README.md with your specific setup instructions
+✏️ Update Operation
 
-## Resources
+    Update the price of a specific book
 
-- [MongoDB Documentation](https://docs.mongodb.com/)
-- [MongoDB University](https://university.mongodb.com/)
-- [MongoDB Node.js Driver](https://mongodb.github.io/node-mongodb-native/) 
+db.books.updateOne(
+  { title: "The Hobbit" },
+  { $set: { price: 15.99 } }
+)
+
+🗑️ Delete Operation
+
+    Delete a book by its title
+
+db.books.deleteOne({ title: "Moby Dick" })
+
+📊 TASK THREE – Advanced Queries
+✅ Find books that are both in stock and published after 2010
+
+db.books.find({
+  in_stock: true,
+  published_year: { $gt: 2010 }
+})
+
+✅ Projection – Return only specific fields
+
+db.books.find(
+  { in_stock: true, published_year: { $gt: 2010 } },
+  { title: 1, author: 1, price: 1, _id: 0 }
+)
+
+🔃 Sorting
+
+    Ascending order by price
+
+db.books.find().sort({ price: 1 })
+
+    Descending order by price
+
+db.books.find().sort({ price: -1 })
+
+    With projection
+
+db.books.find({}, { title: 1, author: 1, price: 1, _id: 0 }).sort({ price: -1 })
+
+📄 Pagination – Display books in chunks of 5
+
+    Page 1
+
+db.books.find()
+  .skip(0)
+  .limit(5)
+  .sort({ price: 1 })
+
+    Page 2
+
+db.books.find()
+  .skip(5)
+  .limit(5)
+
+    With projection
+
+db.books.find({}, { title: 1, price: 1, _id: 0 })
+  .skip(5)
+  .limit(5)
+  .sort({ price: -1 })
+
+📈 TASK FOUR – Aggregation Pipeline
+📊 Average Price of Books by Genre
+
+db.books.aggregate([
+  {
+    $group: {
+      _id: "$genre",
+      averagePrice: { $avg: "$price" },
+      count: { $sum: 1 }
+    }
+  },
+  {
+    $sort: { averagePrice: -1 }
+  }
+])
+
+👨‍💼 Find the Author with the Most Books
+
+db.books.aggregate([
+  {
+    $group: {
+      _id: "$author",
+      bookCount: { $sum: 1 }
+    }
+  },
+  {
+    $sort: { bookCount: -1 }
+  },
+  {
+    $limit: 1
+  }
+])
+
+🕰️ Group Books by Publication Decade
+
+db.books.aggregate([
+  {
+    $addFields: {
+      decade: {
+        $subtract: [
+          "$published_year",
+          { $mod: ["$published_year", 10] }
+        ]
+      }
+    }
+  },
+  {
+    $group: {
+      _id: "$decade",
+      bookCount: { $sum: 1 },
+      books: { $push: "$title" }
+    }
+  },
+  {
+    $sort: { _id: 1 }
+  }
+])
+
+⚙️ TASK FIVE – Indexing
+🏷️ Create Indexes
+
+    Create an index on the title field
+
+db.books.createIndex({ title: 1 })
+
+    Create a compound index on author and published_year
+
+db.books.createIndex({ author: 1, published_year: 1 })
+
+✅ Verify Indexes
+
+db.books.getIndexes()
+
+🔍 Use explain() to Analyze Query Performance
+
+    Without using index
+
+db.books.find({ 
+  author: "George Orwell", 
+  published_year: { $gt: 1940 } 
+}).explain("executionStats")
+
+    With index
+
+db.books.find({ 
+  author: "George Orwell", 
+  published_year: { $gt: 1940 } 
+}).explain("executionStats")
+
+✅ Summary
+
+This setup allows you to:
+
+    Efficiently manage book records using MongoDB.
+    Run optimized queries with indexes.
+    Analyze data with aggregation pipelines.
+    Support frontend pagination and sorting.
+
